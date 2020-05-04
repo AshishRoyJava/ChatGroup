@@ -54,11 +54,13 @@ function onError(error) {
 
 function sendMessage(event) {
     var messageContent = messageInput.value.trim();
+    var encrypted = CryptoJS.AES.encrypt(messageInput.value, "alaap-message-content");
+    var encryptedUser = CryptoJS.AES.encrypt(username, "alaap-username-content");
 
     if(messageContent && stompClient) {
         var chatMessage = {
-            sender: username,
-            content: messageInput.value,
+            sender: encryptedUser.toString(),
+            content: encrypted.toString(),
             type: 'CHAT'
         };
 
@@ -82,22 +84,26 @@ function onMessageReceived(payload) {
         message.content = message.sender + ' left!';
     } else {
         messageElement.classList.add('chat-message');
+        var decryptedUser = CryptoJS.AES.decrypt(message.sender, "alaap-username-content");
 
         var avatarElement = document.createElement('i');
-        var avatarText = document.createTextNode(message.sender[0]);
+        var avatarText = document.createTextNode(decryptedUser.toString(CryptoJS.enc.Utf8)[0]);
         avatarElement.appendChild(avatarText);
-        avatarElement.style['background-color'] = getAvatarColor(message.sender);
+        avatarElement.style['background-color'] = getAvatarColor(decryptedUser.toString(CryptoJS.enc.Utf8));
 
         messageElement.appendChild(avatarElement);
 
         var usernameElement = document.createElement('span');
-        var usernameText = document.createTextNode(message.sender);
+        var usernameText = document.createTextNode(decryptedUser.toString(CryptoJS.enc.Utf8));
         usernameElement.appendChild(usernameText);
         messageElement.appendChild(usernameElement);
     }
 
+    console.log(message.content);
+
     var textElement = document.createElement('p');
-    var messageText = document.createTextNode(message.content);
+    var decrypted = CryptoJS.AES.decrypt(message.content, "alaap-message-content");
+    var messageText = document.createTextNode(decrypted.toString(CryptoJS.enc.Utf8));
     textElement.appendChild(messageText);
 
     messageElement.appendChild(textElement);
